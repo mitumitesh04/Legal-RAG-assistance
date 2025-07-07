@@ -1,4 +1,4 @@
-# Legal AI Assistant 📚⚖️
+# Legal AI Assistant ⚖️
 
 A powerful Legal Research Assistant powered by Retrieval Augmented Generation (RAG) technology, built with Langflow and featuring an intelligent chat interface for legal document analysis.
 
