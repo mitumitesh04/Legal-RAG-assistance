@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legal AI Assistant</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-bg: #0a0a0a;
+            --secondary-bg: #1a1a1a;
+            --tertiary-bg: #2a2a2a;
+            --accent-color: #3b82f6;
+            --text-primary: #ffffff;
+            --text-secondary: #a1a1aa;
+            --text-muted: #71717a;
+            --border-color: #404040;
+            --success-color: #10b981;
+            --gradient-primary: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--primary-bg);
+            color: var(--text-primary);
+            line-height: 1.6;
+            height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Background Pattern */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 25% 25%, rgba(59, 130, 246, 0.1) 0%, transparent 25%),
+                radial-gradient(circle at 75% 75%, rgba(59, 130, 246, 0.05) 0%, transparent 25%);
+            z-index: -1;
+        }
+
+        .container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 1rem;
+            gap: 1rem;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 1rem 0;
+            flex-shrink: 0;
+        }
+
+        .header h1 {
+            font-size: 2.5 rem;
+            font-weight: 700;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.2rem;
+            letter-spacing: -0.02em;
+        }
+
+        .header .subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 1rem;
+            flex: 1;
+            min-height: 600px;
+        }
+
+        /* Left Sidebar - Sample Queries */
+        .sidebar {
+            background: var(--secondary-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            flex-direction: column;
+            overflow:hidden;
+        }
+
+        .sidebar h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-align: center;
+            justify-content: center;
+        }
+
+        .sidebar h3 i {
+            color: var(--accent-color);
+        }
+
+        .example-questions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            flex: 1;
+            overflow-y: auto;
+            min-height: 0;
+        }
+
+        .example-question {
+            background: var(--tertiary-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .example-question:hover {
+            background: var(--accent-color);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .example-question i {
+            color: var(--accent-color);
+            font-size: 1.1rem;
+            min-width: 20px;
+        }
+
+        .example-question:hover i {
+            color: white;
+        }
+
+        /* Right Side Chat */
+        .chat-container {
+            background: var(--secondary-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: var(--shadow-xl);
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        /* Custom Chat Interface */
+        .chat-messages {
+            flex: 1;
+            padding: 1.5rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            min-height: 0;
+        }
+
+        .message {
+            max-width: 85%;
+            padding: 1rem 1.25rem;
+            border-radius: 16px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .message.user {
+            align-self: flex-end;
+            background: var(--gradient-primary);
+            color: white;
+            margin-left: auto;
+        }
+
+        .message.assistant {
+            align-self: flex-start;
+            background: var(--tertiary-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .message-content strong {
+            color: var(--accent-color);
+            font-weight: 600;
+        }
+
+        .message-content ul {
+            margin: 0.5rem 0;
+            padding-left: 1.5rem;
+        }
+
+        .message-content li {
+            margin: 0.25rem 0;
+            color: var(--text-secondary);
+        }
+
+        .message-time {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+            opacity: 0.7;
+        }
+
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.25rem;
+            background: var(--tertiary-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            max-width: 85%;
+            color: var(--text-secondary);
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .typing-dots span {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            animation: bounce 1.4s infinite ease-in-out;
+        }
+
+        .typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Chat Input */
+        .chat-input-container {
+            padding: 1.5rem;
+            background: var(--secondary-bg);
+            border-top: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-end;
+        }
+
+        .chat-input {
+            flex: 1;
+            background: var(--tertiary-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 0.875rem 1rem;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            resize: none;
+            min-height: 44px;
+            max-height: 120px;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .chat-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .send-button {
+            background: var(--gradient-primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 0.875rem 1.25rem;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            min-width: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .send-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .send-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Connection Status */
+        .connection-status {
+            padding: 0.75rem 1.5rem;
+            background: var(--tertiary-bg);
+            border-bottom: 1px solid var(--border-color);
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            flex-shrink: 0;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--success-color);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Welcome Message */
+        .welcome-message {
+            background: var(--tertiary-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin: 1rem;
+            text-align: center;
+            color: var(--text-secondary);
+        }
+
+        .welcome-message h4 {
+            color: var(--accent-color);
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .welcome-message p {
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .welcome-features {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .feature-item {
+            background: var(--secondary-bg);
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+        }
+
+        .feature-item i {
+            color: var(--accent-color);
+            margin-right: 0.5rem;
+        }
+
+        /* Scrollbar Styling */
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: var(--tertiary-bg);
+            border-radius: 3px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: var(--accent-color);
+            border-radius: 3px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: #2563eb;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr;
+                min-height: auto;
+            }
+            
+            .sidebar {
+                min-height: auto;
+            }
+            
+            .chat-container {
+                min-height: 500px;
+            }
+            
+            .example-questions {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.5rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 0.5rem;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .chat-container {
+                min-height: 400px;
+            }
+            
+            .sidebar {
+                padding: 1rem;
+            }
+            
+            .example-questions {
+                grid-template-columns: 1fr;
+            }
+            
+            .example-question {
+                padding: 0.75rem;
+                font-size: 0.8rem;
+            }
+        }
+
+        /* Animation */
+        .fade-in {
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header fade-in">
+            <h1><i class="fas fa-scales-balanced"></i> Legal AI Assistant</h1>
+            <p class="subtitle">Advanced RAG System for Legal Research & Document Analysis</p>
+        </header>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Left Sidebar - Sample Queries -->
+            <aside class="sidebar fade-in">
+            <h3><i class="fas fa-lightbulb"></i> Sample Queries</h3>
+            <div class="example-questions">
+                <div class="example-question" onclick="sendMessage('What is this legal document about?')">
+                    <i class="fas fa-file-contract"></i>
+                    <span>Document Analysis</span>
+                </div>
+                <div class="example-question" onclick="sendMessage('What are the key legal principles mentioned?')">
+                    <i class="fas fa-balance-scale"></i>
+                    <span>Legal Principles</span>
+                </div>
+                <div class="example-question" onclick="sendMessage('Explain the compliance requirements')">
+                    <i class="fas fa-clipboard-check"></i>
+                    <span>Compliance Guide</span>
+                </div>
+                <div class="example-question" onclick="sendMessage('What penalties are mentioned?')">
+                    <i class="fas fa-gavel"></i>
+                    <span>Penalties & Sanctions</span>
+                </div>
+                <div class="example-question" onclick="sendMessage('Analyze constitutional provisions')">
+                    <i class="fas fa-landmark"></i>
+                    <span>Constitutional Law</span>
+                </div>
+                <div class="example-question" onclick="sendMessage('Legal procedures and requirements')">
+                    <i class="fas fa-file-signature"></i>
+                    <span>Legal Procedures</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Right Side Chat -->
+        <main class="chat-container fade-in">
+            <div class="connection-status">
+                <span class="status-dot"></span>
+                <span id="connection-status">Legal AI Assistant Ready</span>
+            </div>
+
+            <div class="chat-messages" id="chatMessages">
+                <div class="welcome-message">
+                    <h4><i class="fas fa-robot"></i> Legal AI Assistant</h4>
+                    <p>Welcome! I'm your intelligent legal research assistant powered by advanced RAG technology.</p>
+                    <p>I can help you analyze legal documents, extract key principles, and provide contextual legal guidance.</p>
+                    <div class="welcome-features">
+                        <div class="feature-item">
+                            <i class="fas fa-search"></i>
+                            Semantic Search
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-brain"></i>
+                            AI Analysis
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-quote-right"></i>
+                            Citation Ready
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-clock"></i>
+                            Real-time
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="typing-indicator" id="typingIndicator">
+                <div class="typing-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+                <span>Analyzing legal documents...</span>
+            </div>
+
+            <div class="chat-input-container">
+                <div class="input-group">
+                    <textarea 
+                        id="messageInput" 
+                        class="chat-input" 
+                        placeholder="Ask about legal documents, compliance, procedures..."
+                        rows="1"
+                    ></textarea>
+                    <button id="sendButton" class="send-button">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class LegalAIAssistant {
+            constructor() {
+                this.apiEndpoint = 'http://localhost:7860/api/v1/run/20ef1d60-f4de-4c1a-8456-bcbb385525da';
+                this.sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                this.messageInput = document.getElementById('messageInput');
+                this.sendButton = document.getElementById('sendButton');
+                this.chatMessages = document.getElementById('chatMessages');
+                this.typingIndicator = document.getElementById('typingIndicator');
+                this.connectionStatus = document.getElementById('connection-status');
+                
+                this.initializeEventListeners();
+                this.checkConnection();
+                this.animateOnLoad();
+            }
+
+            initializeEventListeners() {
+                // Send button click
+                this.sendButton.addEventListener('click', () => this.sendMessage());
+                
+                // Enter key to send (Shift+Enter for new line)
+                this.messageInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        this.sendMessage();
+                    }
+                });
+
+                // Auto-resize textarea
+                this.messageInput.addEventListener('input', () => {
+                    this.messageInput.style.height = 'auto';
+                    this.messageInput.style.height = Math.min(this.messageInput.scrollHeight, 120) + 'px';
+                });
+            }
+
+            async checkConnection() {
+                try {
+                    const response = await fetch('http://localhost:7860/health', {
+                        method: 'GET',
+                        timeout: 3000
+                    });
+                    
+                    if (response.ok) {
+                        this.updateConnectionStatus('🟢 Connected to Langflow API');
+                    } else {
+                        throw new Error('API not responding');
+                    }
+                } catch (error) {
+                    this.updateConnectionStatus('🟡 Demo Mode - Langflow Offline');
+                }
+            }
+
+            updateConnectionStatus(message) {
+                this.connectionStatus.textContent = message;
+            }
+
+            async sendMessage(message = null) {
+                const messageText = message || this.messageInput.value.trim();
+                if (!messageText || this.sendButton.disabled) return;
+
+                // Add user message to chat
+                this.addMessage(messageText, 'user');
+                
+                // Clear input and disable send button
+                if (!message) {
+                    this.messageInput.value = '';
+                    this.messageInput.style.height = 'auto';
+                }
+                this.setSendButtonState(false);
+                
+                // Show typing indicator
+                this.showTypingIndicator();
+
+                try {
+                    // Call Langflow API
+                    const response = await this.callLangflowAPI(messageText);
+                    
+                    // Hide typing indicator
+                    this.hideTypingIndicator();
+                    
+                    // Add AI response to chat
+                    this.addMessage(response, 'assistant');
+                    
+                } catch (error) {
+                    console.error('Error:', error);
+                    this.hideTypingIndicator();
+                    
+                    // Show demo response if API fails
+                    const demoResponse = this.getDemoResponse(messageText);
+                    this.addMessage(demoResponse, 'assistant');
+                }
+
+                this.setSendButtonState(true);
+            }
+
+            async callLangflowAPI(message) {
+                const payload = {
+                    "input_value": message,
+                    "output_type": "chat",
+                    "input_type": "chat",
+                    "session_id": this.sessionId
+                };
+
+                const options = {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                };
+
+                const response = await fetch(this.apiEndpoint, options);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                
+                // Extract the response text from Langflow's response structure
+                if (data && data.outputs && data.outputs.length > 0) {
+                    const output = data.outputs[0];
+                    if (output.outputs && output.outputs.length > 0) {
+                        const chatOutput = output.outputs[0];
+                        if (chatOutput.results && chatOutput.results.message) {
+                            return chatOutput.results.message.text || chatOutput.results.message;
+                        }
+                    }
+                }
+                
+                return data.result || data.message || 'Response received but content could not be parsed.';
+            }
+
+            getDemoResponse(message) {
+                const demoResponses = {
+                    "what is this document about": "**📄 Document Analysis**\n\nBased on the legal documents in the database, this appears to be a comprehensive legal text covering various aspects of Indian law, including constitutional principles, civil procedures, and regulatory frameworks.\n\n**Key Topics Identified:**\n• Constitutional law and fundamental rights\n• Civil and criminal procedure guidelines\n• Corporate governance and compliance\n• Contract law and commercial obligations\n\n*This is a demo response. Connect Langflow for detailed analysis of your specific legal document collection.*",
+                    
+                    "legal principles": "**⚖️ Key Legal Principles**\n\n**Fundamental Principles:**\n1. **Due Process** - Fair legal proceedings\n2. **Natural Justice** - Right to be heard\n3. **Rule of Law** - Equal application of laws\n4. **Constitutional Supremacy** - Constitution as highest law\n5. **Separation of Powers** - Independent branches of government\n\n**Application Areas:**\n• Civil rights and liberties\n• Administrative law procedures\n• Judicial review mechanisms\n\n*Connect Langflow to analyze specific legal principles from your document database.*",
+                    
+                    "compliance": "**📋 Compliance Requirements**\n\n**Mandatory Compliance Areas:**\n• **Documentation** - Maintain proper legal records\n• **Reporting** - Submit required regulatory filings\n• **Auditing** - Regular compliance assessments\n• **Training** - Staff education on legal requirements\n• **Monitoring** - Continuous oversight\n\n**Penalties for Non-Compliance:**\n• Financial penalties as prescribed\n• Legal action by authorities\n• Operational restrictions\n\n*For specific compliance requirements in your jurisdiction, connect Langflow to access detailed legal documents.*"
+                };
+
+                const lowerMessage = message.toLowerCase();
+                for (const [key, response] of Object.entries(demoResponses)) {
+                    if (lowerMessage.includes(key)) {
+                        return response;
+                    }
+                }
+
+                return `**🤖 Legal Analysis**\n\nRegarding: "${message}"\n\nI would analyze your legal document collection to provide:\n\n• **Relevant legal sections** addressing your query\n• **Contextual explanations** of applicable laws\n• **Specific citations** and references\n• **Practical implications** for your situation\n\n**Technical Process:**\n1. Convert query to vector embeddings\n2. Search through legal document database\n3. Retrieve most relevant content\n4. Generate comprehensive response\n\n*This is a demo. Connect Langflow for real-time analysis of your legal documents.*`;
+            }
+
+            addMessage(content, sender) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${sender}`;
+                
+                const messageContent = document.createElement('div');
+                messageContent.className = 'message-content';
+                
+                if (sender === 'assistant') {
+                    // Convert markdown-style formatting to HTML
+                    content = content
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                        .replace(/•/g, '<li>')
+                        .replace(/\n/g, '<br>');
+                    
+                    messageContent.innerHTML = content;
+                } else {
+                    messageContent.textContent = content;
+                }
+                
+                const timestamp = document.createElement('div');
+                timestamp.className = 'message-time';
+                timestamp.textContent = new Date().toLocaleTimeString();
+                
+                messageDiv.appendChild(messageContent);
+                messageDiv.appendChild(timestamp);
+                this.chatMessages.appendChild(messageDiv);
+                
+                // Scroll to bottom
+                this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+            }
+
+            showTypingIndicator() {
+                this.typingIndicator.style.display = 'flex';
+                this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+            }
+
+            hideTypingIndicator() {
+                this.typingIndicator.style.display = 'none';
+            }
+
+            setSendButtonState(enabled) {
+                this.sendButton.disabled = !enabled;
+                this.messageInput.disabled = !enabled;
+            }
+
+            animateOnLoad() {
+                const elements = document.querySelectorAll('.fade-in');
+                elements.forEach((el, index) => {
+                    setTimeout(() => {
+                        el.classList.add('fade-in');
+                    }, index * 200);
+                });
+            }
+        }
+
+        // Global function for example questions
+        function sendMessage(message) {
+            if (window.legalAI) {
+                window.legalAI.sendMessage(message);
+            }
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            window.legalAI = new LegalAIAssistant();
+        });
+    </script>
+</body>
+</html>
